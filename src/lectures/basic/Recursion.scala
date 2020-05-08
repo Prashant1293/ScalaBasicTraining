@@ -1,5 +1,7 @@
 package lectures.basic
 
+import scala.annotation.tailrec
+
 /**
  * Recursive calls are made using the internal stack space by the JVM. This means, if we try to reserve quite a big
  * stack space it would lead to stack overflow exception. The key to avoid getting into such trouble is to use
@@ -9,7 +11,7 @@ package lectures.basic
  * Here we will try to do the following using tail recursion:
  * 1. Make Factorial TailRecursive.
  * 2. Make Fibonacci TailRecursive.
- * 3. Make Concatenate a string n time using TailRecursion.
+ * 3. Concatenate a string n time using TailRecursion.
  *
  * The trick when using tail recursion is to rely on the extra input variables we use to define tail recursive methods.
  * As in the case of tailed factorial implementation we simply returned the value of Ack. In such an approach stack is
@@ -18,6 +20,7 @@ package lectures.basic
  */
 object Recursion extends App {
 
+  // Factorial as tailed recursion.
   def tailedFactorial(number: Int): BigInt = {
     @scala.annotation.tailrec
     def factorialHelper(number: Int, ack: BigInt): BigInt = {
@@ -38,5 +41,36 @@ object Recursion extends App {
 
   // 2. Fibonacci as tailed recursion.
 
+  def tailedFibonacci(count: Int): Int = {
+    @tailrec
+    def fiboHelper(index: Int, prev: Int, sum: Int): Int = {
+      if (index == count) {
+        sum
+      }
+      else {
+        fiboHelper(index + 1, sum, sum + prev)
+      }
+    }
 
+    fiboHelper(1, 0, 1)
+  }
+
+  println(tailedFibonacci(8))
+
+  // String concatenation n times using tailed recursion.
+  def tailedConcat(str: String, count: Int): String = {
+    @tailrec
+    def concatHelper(start: Int, strConcat: String): String = {
+      if (start == count) {
+        strConcat
+      }
+      else {
+        concatHelper(start + 1, strConcat + str)
+      }
+    }
+
+    concatHelper(1, str)
+  }
+
+  println(tailedConcat("Sharma",4))
 }
