@@ -115,20 +115,14 @@ object ListExtension extends App {
   // Let us try apply the filter, map, and flatMap methods to our list.
 
   println(s"Filtered list with even numbers = ${
-    listOfInts.filter(new MyPredicate[Int] {
-      override def test(elem: Int): Boolean = elem % 2 == 0
-    }).toString
+    listOfInts.filter((elem: Int) => elem % 2 == 0).toString
   }")
 
   println(s"Applied map to get the square of elements in the list = ${
-    listOfInts.map(new MyTransformer[Int, Int] {
-      override def transform(elem: Int): Int = elem * elem
-    }).toString
+    listOfInts.map((elem: Int) => elem * elem).toString
   }")
 
   println(s"Applying flatmap on the list = ${
-    listOfInts.flatMap(new MyTransformer[Int, GenericList[Int]] {
-      override def transform(elem: Int): GenericList[Int] = new ContentList[Int](elem, new ContentList(elem + 1, MyEmptyList))
-    }).toString
+    listOfInts.flatMap((elem: Int) => new ContentList[Int](elem, new ContentList(elem + 1, MyEmptyList))).toString
   }")
 }
