@@ -37,7 +37,7 @@ abstract class GenericList[+A] {
 // We will need to extend the abstract class by 2 components, 1 an object denoting empty list,
 // and 2nd a class denoting non-empty list.
 
-object MyEmptyList extends GenericList[Nothing] {
+case object MyEmptyList extends GenericList[Nothing] {
   def head: Nothing = throw new NoSuchElementException
 
   def tail: GenericList[Nothing] = throw new NoSuchElementException
@@ -60,7 +60,7 @@ object MyEmptyList extends GenericList[Nothing] {
   def ++[B >: Nothing](list: GenericList[B]): GenericList[B] = list
 }
 
-class ContentList[+A](header: A, tailOb: GenericList[A]) extends GenericList[A] {
+case class ContentList[+A](header: A, tailOb: GenericList[A]) extends GenericList[A] {
   def head: A = this.header
 
   def tail: GenericList[A] = tailOb
@@ -123,6 +123,14 @@ object ListExtension extends App {
   }")
 
   println(s"Applying flatmap on the list = ${
-    listOfInts.flatMap((elem: Int) => new ContentList[Int](elem, new ContentList(elem + 1, MyEmptyList))).toString
+    listOfInts.flatMap(new MyTransformer[Int, GenericList[Int]] {
+      override def transform(elem: Int): GenericList[Int] = new ContentList(elem, new ContentList(elem + 1, MyEmptyList))
+    }).toString
   }")
+
+  // Let's see how making case class and case object helps in our case. Also, now we do not need to use new keyword to
+  // create instance of class. Case classes have their own apply method that takes care of object creation.
+  val anotherListOfInts = ContentList(1, new ContentList(2, new ContentList(3, MyEmptyList)))
+  println(listOfInts == anotherListOfInts)
+
 }
