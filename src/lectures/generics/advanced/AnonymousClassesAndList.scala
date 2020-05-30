@@ -4,6 +4,12 @@ package lectures.generics.advanced
  * We have already created a generic implementation of a user defined list. What is left now is to understand
  * the anonymous classes in scala. With the help of these classes we will be able to create the other special methods
  * on the list instance that are map, flatmap, & filter. Let's go through the implementation.
+ *
+ * Important to note here that this implementation is still using object oriented approach when we are creating objects
+ * for the transformer and the predicates. We can make it fully functional especially in the case of map, flatMap, and
+ * filter by leveraging the Function[] capability from Scala language. We will update this implementation in the List
+ * class under the functions package.
+ *
  */
 class AnonymousClassesAndList {
 
