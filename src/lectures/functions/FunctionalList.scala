@@ -43,6 +43,8 @@ abstract class GenericListFunctional[+A] {
   def forEach(f: A => Unit): Unit
 
   def sort(compare: (A, A) => Int): GenericListFunctional[A]
+
+  def zipWith[B, C](list: GenericListFunctional[B], zip: (A, B) => C): GenericListFunctional[C]
 }
 
 // We will need to extend the abstract class by 2 components, 1 an object denoting empty list,
@@ -74,6 +76,11 @@ case object MyEmptyList extends GenericListFunctional[Nothing] {
   override def forEach(f: Nothing => Unit): Unit = ()
 
   override def sort(compare: (Nothing, Nothing) => Int): GenericListFunctional[Nothing] = MyEmptyList
+
+  override def zipWith[B, C](list: GenericListFunctional[B], zip: (Nothing, B) => C): GenericListFunctional[C] = {
+    if (!list.isEmpty) throw new RuntimeException("Lists length differs.")
+    else MyEmptyList
+  }
 }
 
 case class ContentList[+A](header: A, tailOb: GenericListFunctional[A]) extends GenericListFunctional[A] {
@@ -122,31 +129,36 @@ case class ContentList[+A](header: A, tailOb: GenericListFunctional[A]) extends 
       else ContentList(sortedList.head, insert(headValue, sortedList.tail))
     }
 
-    println(s"tailObject = $tailOb")
     val sortedTail = tailOb.sort(compare)
-    println(s"header = $head")
     insert(head, sortedTail)
   }
-}
 
-// To change it into Function we need to analyze what does it takes in and what it outputs. Predicate takes in a T and returns a Boolean everytime.
-// We won't need the predicate trait anymore, wherever it was needed we'll replace that by T => Boolean
-/*
-trait MyPredicate[-T] {
-  def test(elem: T): Boolean
-}
-*/
+  override def zipWith[B, C](list: GenericListFunctional[B], zip: (A, B) => C): GenericListFunctional[C] = {
+    if (list.isEmpty) throw new RuntimeException("Lists length differs.")
+    else new ContentList[C](zip(head, list.head), tailOb.zipWith(list.tail, zip))
+  }
 
-// We won't need the transformer trait anymore, wherever it was needed we'll replace that by A => B
-/*
-trait MyTransformer[-A, B] {
-  def transform(elem: A): B
+
+  // To change it into Function we need to analyze what does it takes in and what it outputs. Predicate takes in a T and returns a Boolean everytime.
+  // We won't need the predicate trait anymore, wherever it was needed we'll replace that by T => Boolean
+  /*
+  trait MyPredicate[-T] {
+    def test(elem: T): Boolean
+  }
+  */
+
+  // We won't need the transformer trait anymore, wherever it was needed we'll replace that by A => B
+  /*
+  trait MyTransformer[-A, B] {
+    def transform(elem: A): B
+  }
+  */
 }
-*/
 
 object FunctionalListExtension extends App {
-  val listOfInts = new ContentList(1, new ContentList(2, new ContentList(3, MyEmptyList)))
+  val listOfInts = new ContentList(1, new ContentList(2, new ContentList(3, MyEmptyList))).add(4).add(5)
   val listOfStrings = new ContentList("hello", new ContentList("generics", new ContentList("in scala", MyEmptyList)))
+  val anotherListOfStrings = new ContentList("hello", new ContentList("generics", new ContentList("in scala", MyEmptyList))).add("Sample").add("zipWith")
 
   println(s"list of ints = $listOfInts \nand list of strings = $listOfStrings")
 
@@ -185,4 +197,13 @@ object FunctionalListExtension extends App {
     println(s"x = $x, y = $y")
     y - x
   }))
+
+  println(anotherListOfInts.zipWith(listOfInts, (x, y: Int) => x * y))
+  println(anotherListOfStrings.zipWith[Int, String](listOfInts, (x, y) => x + "_" + y))
+  println(anotherListOfStrings.zipWith[Int, String](listOfInts, (x, y) => x * y))
+  /* This prints:
+[25,16,1,4,9]
+[zipWith_5,Sample_4,hello_1,generics_2,in scala_3]
+[zipWithzipWithzipWithzipWithzipWith,SampleSampleSampleSample,hello,genericsgenerics,in scalain scalain scala]
+*/
 }
