@@ -45,6 +45,11 @@ abstract class GenericListFunctional[+A] {
   def sort(compare: (A, A) => Int): GenericListFunctional[A]
 
   def zipWith[B, C](list: GenericListFunctional[B], zip: (A, B) => C): GenericListFunctional[C]
+
+  // This is a partial function definition for fold use currying instead.
+  // def fold[B](start: B, folder: (A, B) => B): B
+
+  def fold[B](start: B)(operator: (B, A) => B): B
 }
 
 // We will need to extend the abstract class by 2 components, 1 an object denoting empty list,
@@ -81,6 +86,10 @@ case object MyEmptyList extends GenericListFunctional[Nothing] {
     if (!list.isEmpty) throw new RuntimeException("Lists length differs.")
     else MyEmptyList
   }
+
+  // This is a partial function definition for fold use currying instead.
+  // override def fold[B](start: B, folder: (Nothing, B) => B): B = start
+  override def fold[B](start: B)(operator: (B, Nothing) => B): B = start
 }
 
 case class ContentList[+A](header: A, tailOb: GenericListFunctional[A]) extends GenericListFunctional[A] {
@@ -138,6 +147,17 @@ case class ContentList[+A](header: A, tailOb: GenericListFunctional[A]) extends 
     else new ContentList[C](zip(head, list.head), tailOb.zipWith(list.tail, zip))
   }
 
+  // This is a partial function definition for fold use currying instead.
+  /*override def fold[B](start: B, folder: (A, B) => B): B = {
+    if (tailOb.isEmpty)
+      folder(head, start)
+    else
+      tailOb.fold(folder(head, start), folder)
+  }*/
+
+  override def fold[B](start: B)(operator: (B, A) => B): B = {
+    tailOb.fold(operator(start, head))(operator)
+  }
 
   // To change it into Function we need to analyze what does it takes in and what it outputs. Predicate takes in a T and returns a Boolean everytime.
   // We won't need the predicate trait anymore, wherever it was needed we'll replace that by T => Boolean
@@ -206,4 +226,7 @@ object FunctionalListExtension extends App {
 [zipWith_5,Sample_4,hello_1,generics_2,in scala_3]
 [zipWithzipWithzipWithzipWithzipWith,SampleSampleSampleSample,hello,genericsgenerics,in scalain scalain scala]
 */
+
+  println(anotherListOfInts.fold(1)((x, y) => x + y))
+  println(anotherListOfInts.fold(2)(_ + _))
 }
