@@ -9,6 +9,9 @@ class FunctionalList {
  * Function[] capability of Scala. This kind of implementation moves our code away from Object oriented programming and
  * leads towards functional programming. The most benefited methods would be map, flatMap, and filter here.
  *
+ * Now let's enhance this list with the implementations for the forEach, sort, zipWith and fold methods using HOF and
+ * currying.
+ *
  * @tparam A
  */
 abstract class GenericListFunctional[+A] {
@@ -35,6 +38,11 @@ abstract class GenericListFunctional[+A] {
 
   // concatenation defined.
   def ++[B >: A](list: GenericListFunctional[B]): GenericListFunctional[B]
+
+  // HOF's start from here.
+  def forEach(f: A => Unit): Unit
+
+  def sort(compare: (A, A) => Int): GenericListFunctional[A]
 }
 
 // We will need to extend the abstract class by 2 components, 1 an object denoting empty list,
@@ -61,6 +69,11 @@ case object MyEmptyList extends GenericListFunctional[Nothing] {
 
   // An empty list concatenated with itself would ultimately yield the same list only.
   def ++[B >: Nothing](list: GenericListFunctional[B]): GenericListFunctional[B] = list
+
+  // An empty list doesn't need to print anything to the console since it is empty.
+  override def forEach(f: Nothing => Unit): Unit = ()
+
+  override def sort(compare: (Nothing, Nothing) => Int): GenericListFunctional[Nothing] = MyEmptyList
 }
 
 case class ContentList[+A](header: A, tailOb: GenericListFunctional[A]) extends GenericListFunctional[A] {
@@ -94,6 +107,26 @@ case class ContentList[+A](header: A, tailOb: GenericListFunctional[A]) extends 
   def flatMap[B](transformer: A => GenericListFunctional[B]): GenericListFunctional[B] = {
     transformer.apply(header) ++ tailOb.flatMap(transformer)
   }
+
+  // A for each should print each element in the list till the end is reached.
+  override def forEach(f: A => Unit): Unit = {
+    f(header)
+    tailOb.forEach(f)
+  }
+
+  // A sort should be able to sort this list on the basis of sort function received.
+  override def sort(compare: (A, A) => Int): GenericListFunctional[A] = {
+    def insert(headValue: A, sortedList: GenericListFunctional[A]): ContentList[A] = {
+      if (sortedList.isEmpty) ContentList(headValue, MyEmptyList)
+      else if (compare(headValue, sortedList.head) <= 0) ContentList(headValue, sortedList)
+      else ContentList(sortedList.head, insert(headValue, sortedList.tail))
+    }
+
+    println(s"tailObject = $tailOb")
+    val sortedTail = tailOb.sort(compare)
+    println(s"header = $head")
+    insert(head, sortedTail)
+  }
 }
 
 // To change it into Function we need to analyze what does it takes in and what it outputs. Predicate takes in a T and returns a Boolean everytime.
@@ -125,11 +158,11 @@ object FunctionalListExtension extends App {
   // Let us try apply the filter, map, and flatMap methods to our list.
 
   println(s"Filtered list with even numbers = ${
-    listOfInts.filter((elem: Int) => elem % 2 == 0).toString
+    listOfInts.filter(elem => elem % 2 == 0).toString
   }")
 
   println(s"Applied map to get the square of elements in the list = ${
-    listOfInts.map((elem: Int) => elem * elem).toString
+    listOfInts.map(elem => elem * elem).toString
   }")
 
   println(s"Applying flatmap on the list = ${
@@ -140,7 +173,16 @@ object FunctionalListExtension extends App {
 
   // Let's see how making case class and case object helps in our case. Also, now we do not need to use new keyword to
   // create instance of class. Case classes have their own apply method that takes care of object creation.
-  val anotherListOfInts = ContentList(1, new ContentList(2, new ContentList(3, MyEmptyList)))
+  val anotherListOfInts = ContentList(1, new ContentList(2, new ContentList(3, MyEmptyList))).add(4).add(5)
+
   println(listOfInts == anotherListOfInts)
 
+  // HOF method calls.
+  anotherListOfInts.forEach(x => println(x)) // Or we can simply write it as
+  anotherListOfInts.forEach(println)
+
+  println(anotherListOfInts.sort((x, y) => {
+    println(s"x = $x, y = $y")
+    y - x
+  }))
 }
