@@ -21,15 +21,16 @@ object CurriedAndCompose extends App {
     x => g(f(x))
   }
 
-  println(toCurry((x, y) => x + y)(5)(6))
+  val adder = (x: Int, y: Int) => x + y
+  println(toCurry(adder)(5)(6))
   println(fromCurry(x => y => x + y)(5, 6))
   println(compose(x => x + 2, y => y - 5)(4))
   println(andThen((x: Int) => x + 2, (y: Int) => y - 5)(4))
 
   val add2 = (x: Int) => x + 2
   val times5 = (y: Int) => y * 5
-  val composed = compose(add2,times5)
-  val ordered = andThen(add2,times5)
+  val composed = compose(add2, times5)
+  val ordered = andThen(add2, times5)
 
   println(composed(4))
   println(ordered(4))
